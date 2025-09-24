@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quote of the Day</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .quote-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: slideIn 0.8s ease-out forwards;
+        }
+
+        @keyframes slideIn {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .app-title {
+            color: #333;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .date {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 40px;
+        }
+
+        .quote-content {
+            position: relative;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .quote-text {
+            font-size: 1.4rem;
+            line-height: 1.6;
+            color: #444;
+            margin-bottom: 20px;
+            font-style: italic;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .quote-text.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .quote-author {
+            font-size: 1.1rem;
+            color: #667eea;
+            font-weight: bold;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease 0.2s;
+        }
+
+        .quote-author.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .quote-author::before {
+            content: "— ";
+        }
+
+        .controls {
+            margin-top: 40px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.secondary {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn.secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .quote-number {
+            margin-top: 20px;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            display: none;
+            color: #667eea;
+            font-style: italic;
+        }
+
+        @media (max-width: 600px) {
+            .quote-container {
+                padding: 30px 20px;
+            }
+            
+            .app-title {
+                font-size: 1.8rem;
+            }
+            
+            .quote-text {
+                font-size: 1.2rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quote-container">
+        <h1 class="app-title">Quote of the Day</h1>
+        <div class="date" id="currentDate"></div>
+        
+        <div class="quote-content">
+            <div class="loading" id="loading">Loading inspiration...</div>
+            <div class="quote-text" id="quoteText"></div>
+            <div class="quote-author" id="quoteAuthor"></div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn" id="newQuoteBtn">New Quote</button>
+            <button class="btn secondary" id="shareBtn">Share Quote</button>
+            <button class="btn secondary" id="favoriteBtn">♡ Favorite</button>
+        </div>
+        
+        <div class="quote-number" id="quoteNumber"></div>
+    </div>
+
+    <script>
+        // Quote database
+        const quotes = [
+            {
+                text: "The only way to do great work is to love what you do.",
+                author: "Steve Jobs"
+            },
+            {
+                text: "Life is what happens to you while you're busy making other plans.",
+                author: "John Lennon"
+            },
+            {
+                text: "The future belongs to those who believe in the beauty of their dreams.",
+                author: "Eleanor Roosevelt"
+            },
+            {
+                text: "It is during our darkest moments that we must focus to see the light.",
+                author: "Aristotle"
+            },
+            {
+                text: "The way to get started is to quit talking and begin doing.",
+                author: "Walt Disney"
+            },
+            {
+                text: "Your time is limited, so don't waste it living someone else's life.",
+                author: "Steve Jobs"
+            },
+            {
+                text: "If life were predictable it would cease to be life, and be without flavor.",
+                author: "Eleanor Roosevelt"
+            },
+            {
+                text: "In the end, we will remember not the words of our enemies, but the silence of our friends.",
+                author: "Martin Luther King Jr."
+            },
+            {
+                text: "The only impossible journey is the one you never begin.",
+                author: "Tony Robbins"
+            },
+            {
+                text: "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+                author: "Winston Churchill"
+            },
+            {
+                text: "The greatest glory in living lies not in never falling, but in rising every time we fall.",
+                author: "Nelson Mandela"
+            },
+            {
+                text: "Be yourself; everyone else is already taken.",
+                author: "Oscar Wilde"
+            },
+            {
+                text: "Two things are infinite: the universe and human stupidity; and I'm not sure about the universe.",
+                author: "Albert Einstein"
+            },
+            {
+                text: "You only live once, but if you do it right, once is enough.",
+                author: "Mae West"
+            },
+            {
+                text: "Be the change that you wish to see in the world.",
+                author: "Mahatma Gandhi"
+            }
+        ];
+
+        // DOM elements
+        const quoteText = document.getElementById('quoteText');
+        const quoteAuthor = document.getElementById('quoteAuthor');
+        const newQuoteBtn = document.getElementById('newQuoteBtn');
+        const shareBtn = document.getElementById('shareBtn');
+        const favoriteBtn = document.getElementById('favoriteBtn');
+        const quoteNumber = document.getElementById('quoteNumber');
+        const currentDate = document.getElementById('currentDate');
+        const loading = document.getElementById('loading');
+
+        let currentQuoteIndex = 0;
+        let favorites = JSON.parse(localStorage.getItem('favoriteQuotes') || '[]');
+
+        // Initialize app
+        function init() {
+            updateDate();
+            loadTodaysQuote();
+            setupEventListeners();
+        }
+
+        // Update current date
+        function updateDate() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            currentDate.textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        // Load today's quote (based on date for consistency)
+        function loadTodaysQuote() {
+            const today = new Date();
+            const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+            currentQuoteIndex = dayOfYear % quotes.length;
+            displayQuote(currentQuoteIndex);
+        }
+
+        // Display quote with animation
+        function displayQuote(index, animate = true) {
+            if (animate) {
+                // Hide current quote
+                quoteText.classList.remove('show');
+                quoteAuthor.classList.remove('show');
+                loading.style.display = 'block';
+
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                    showQuote(index);
+                }, 500);
+            } else {
+                showQuote(index);
+            }
+        }
+
+        function showQuote(index) {
+            const quote = quotes[index];
+            quoteText.textContent = `"${quote.text}"`;
+            quoteAuthor.textContent = quote.author;
+            
+            // Show with animation
+            setTimeout(() => {
+                quoteText.classList.add('show');
+                quoteAuthor.classList.add('show');
+            }, 100);
+            
+            updateQuoteNumber(index);
+            updateFavoriteButton(index);
+        }
+
+        // Update quote number display
+        function updateQuoteNumber(index) {
+            quoteNumber.textContent = `Quote ${index + 1} of ${quotes.length}`;
+        }
+
+        // Update favorite button state
+        function updateFavoriteButton(index) {
+            const isFavorited = favorites.includes(index);
+            favoriteBtn.innerHTML = isFavorited ? '♥ Favorited' : '♡ Favorite';
+            favoriteBtn.style.color = isFavorited ? '#e74c3c' : '';
+        }
+
+        // Get random quote
+        function getRandomQuote() {
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * quotes.length);
+            } while (randomIndex === currentQuoteIndex && quotes.length > 1);
+            
+            currentQuoteIndex = randomIndex;
+            displayQuote(currentQuoteIndex);
+        }
+
+        // Share quote
+        function shareQuote() {
+            const quote = quotes[currentQuoteIndex];
+            const shareText = `"${quote.text}" - ${quote.author}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Quote of the Day',
+                    text: shareText,
+                });
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(shareText).then(() => {
+                    // Visual feedback
+                    const originalText = shareBtn.textContent;
+                    shareBtn.textContent = 'Copied!';
+                    shareBtn.style.background = '#27ae60';
+                    
+                    setTimeout(() => {
+                        shareBtn.textContent = originalText;
+                        shareBtn.style.background = '';
+                    }, 2000);
+                });
+            }
+        }
+
+        // Toggle favorite
+        function toggleFavorite() {
+            const index = currentQuoteIndex;
+            const favoriteIndex = favorites.indexOf(index);
+            
+            if (favoriteIndex === -1) {
+                favorites.push(index);
+            } else {
+                favorites.splice(favoriteIndex, 1);
+            }
+            
+            localStorage.setItem('favoriteQuotes', JSON.stringify(favorites));
+            updateFavoriteButton(index);
+            
+            // Visual feedback
+            favoriteBtn.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                favoriteBtn.style.transform = 'scale(1)';
+            }, 200);
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            newQuoteBtn.addEventListener('click', getRandomQuote);
+            shareBtn.addEventListener('click', shareQuote);
+            favoriteBtn.addEventListener('click', toggleFavorite);
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    getRandomQuote();
+                } else if (e.code === 'KeyF') {
+                    e.preventDefault();
+                    toggleFavorite();
+                }
+            });
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
